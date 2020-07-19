@@ -5,7 +5,7 @@ AC_PREREQ(2.63)
 # 2.64 which allows to define a URL as well
 # 2.68 seems to have updated ax_pthread
 
-AC_INIT([LoFreq_Star], [2.1.3.1], [wilma@gis.a-star.edu.sg])
+AC_INIT([LoFreq_Star], [2.1.4], [wilma@gis.a-star.edu.sg])
 
 # The AC_INIT macro can take any source file as an argument. It just
 # checks that the file is there, which should, in turn, mean that the
@@ -63,12 +63,14 @@ AC_PROG_MAKE_SET
 # AC_PROG_RANLIB will allow you to build code in sub-directories into
 # temporary libraries, which make will then link in with the rest of
 # the code.
-# AC_PROG_RANLIB rendered obsolte by LT_INIT
+# AC_PROG_RANLIB rendered obsolte by LT_INIT?
+AC_PROG_RANLIB
+
 #
 # disable-static: Need to disable static libraries, otherwise we can't
 # link them into the dynamically loaded Python extension
 #
-LT_INIT([disable-static])
+#LT_INIT([disable-static])
 
 # AC_PROG_INSTALL will generate an install target so that users may
 # just type 'make install' to install the software.
@@ -186,25 +188,19 @@ else
     # Could set -O3 but that should be a user choice (env var CFLAGS)
 fi
 
-# currently samtools/libbam and htslib are not properly installed by default
-# so we use an envvar to point us to the directory
-#AC_LIB_LINKFLAGS([hts])
-#AC_LIB_LINKFLAGS([bam])
-AC_ARG_VAR(SAMTOOLS, [*Absolute* path to precompiled samtools source directory])
-if test x"$SAMTOOLS" = x""; then
-   AC_MSG_ERROR([Samtools directory not defined. Please use SAMTOOLS=/fullpath/to/samtoolsdir/])
+if test x"$HTSLIB" != x""; then
+   AC_MSG_ERROR([Use --with-htslib=/fullpath/to/htslibdir instead of HTSLIB variable])
 fi
-AC_ARG_VAR(HTSLIB, [*Absolute* path to precompiled htslib source directory])
-if test x"$HTSLIB" = x""; then
-   AC_MSG_ERROR([Htslib directory not defined. Please use HTSLIB=/fullpath/to/htslibdir/])
+m4_include([m4/ax_with_htslib.m4])
+AX_WITH_HTSLIB
+if test "$ax_cv_htslib" != yes; then
+   AC_MSG_ERROR([HTSlib not found])
 fi
-AC_CHECK_FILE(${SAMTOOLS}/bam.h, [], [AC_MSG_ERROR([bam.h not found])])
-AC_CHECK_FILE(${HTSLIB}/htslib/hts.h, [], [AC_MSG_ERROR([hts.h not found])])
+AM_CONDITIONAL([HTSLIB_IS_SRC], [test "$ax_cv_htslib_which" = source])
 
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_LDFLAGS])
 
-AC_DEFINE([_USE_KNETFILE], [1], [KNETFILE for samtools])
 # AC_DEFINE([SOURCEQUAL_IGNORES_INDELS], [1], [ignore indels in SQ computation as long as we can't predict them])
 
 
